@@ -15,8 +15,7 @@ echo
 
 # Step 1: Update and upgrade the system
 echo -e "${YELLOW}Updating and upgrading system packages...${NC}"
-sudo apt update
-sudo apt upgrade -y
+sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove && sudo apt clean
 echo -e "${GREEN}System packages updated.${NC}"
 echo
 
@@ -185,8 +184,7 @@ echo
 
 # Step 7: Perform final update and upgrade
 echo -e "${YELLOW}Performing final system update and upgrade...${NC}"
-sudo apt update
-sudo apt upgrade -y --allow-downgrades --allow-remove-essential --allow-change-held-packages
+sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove && sudo apt clean
 echo -e "${GREEN}Final system update complete.${NC}"
 echo
 
