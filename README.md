@@ -85,7 +85,7 @@ The script will prompt you for the following options:
 
 ### 1. Tailscale Installation
 
-```
+```bash
 Do you want to install Tailscale? (y/n)
 ```
 
@@ -95,9 +95,52 @@ Do you want to install Tailscale? (y/n)
 - Provides secure access to your server from anywhere
 - Creates a private network between your devices
 
-### 2. UFW Firewall Configuration
+### 2. Docker Installation
 
+```bash
+Do you want to install Docker? (y/n)
 ```
+
+**What it does:**
+
+- Installs Docker Engine, CLI, containerd, and Docker Compose
+- Sets up Docker to start automatically on boot
+- Adds your user to the Docker group for passwordless Docker access
+- Configures the official Docker repository for updates
+
+### 3. SSH Key Addition
+
+```bash
+Do you want to add an SSH key to authorized_keys? (y/n)
+```
+
+If yes, it will ask:
+
+```bash
+Add SSH key to root user? (y/n)
+```
+
+If no, it will ask:
+
+```bash
+Enter the username to add the SSH key for:
+```
+
+Then:
+
+```bash
+Enter the SSH public key (paste the entire key):
+```
+
+**What it does:**
+
+- Adds your SSH public key to the specified user's authorized_keys file
+- Sets proper permissions and ownership on SSH directories and files
+- Allows immediate key-based authentication for the specified user
+
+### 4. UFW Firewall Configuration
+
+```bash
 Do you want to set up UFW firewall? (y/n)
 ```
 
@@ -109,9 +152,9 @@ Do you want to set up UFW firewall? (y/n)
 - If Tailscale was installed, allows Tailscale traffic
 - Enables the firewall with safe defaults
 
-### 3. System Reboot
+### 5. System Reboot
 
-```
+```bash
 Do you want to reboot the system now to apply all changes? (y/n)
 ```
 
@@ -131,16 +174,17 @@ After completion, the script will:
 
 ### Recommended Next Steps
 
-- If you installed Tailscale, run: `sudo tailscale up`
 - Check firewall status with: `sudo ufw status`
 - Verify fail2ban is working: `sudo fail2ban-client status`
-- Review SSH configuration if needed: `sudo nano /etc/ssh/sshd_config`
+- If you installed Tailscale, check its status: `sudo tailscale status`
+- If you installed Docker, log out and back in to use Docker without sudo
+- Consider rebooting to ensure all changes are applied
 
 ## Compatibility
 
 This script is designed for:
 
-- Ubuntu 24.04 LTS (Noble Numbat)
+- Ubuntu 24.04 LTS
 - May work with minimal modifications on other recent Ubuntu/Debian-based distributions
 
 ## Important Security Note
