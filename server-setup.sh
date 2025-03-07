@@ -36,6 +36,44 @@ else
 fi
 echo
 
+# Optional: Install Docker
+read -p "Do you want to install Docker? (y/n): " install_docker
+if [[ $install_docker =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Installing Docker...${NC}"
+    
+    # Add Docker's official GPG key
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+    # Add the repository to Apt sources
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
+
+    # Install the Docker packages
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    # Configure Docker to start on boot with systemd
+    sudo systemctl enable docker.service
+    sudo systemctl enable containerd.service
+    
+    # Add current user to docker group (if not root)
+    if [ "$SUDO_USER" != "" ] && [ "$SUDO_USER" != "root" ]; then
+        sudo usermod -aG docker $SUDO_USER
+        echo -e "${GREEN}Added user $SUDO_USER to the docker group. Log out and back in to apply.${NC}"
+    fi
+    
+    echo -e "${GREEN}Docker installed and configured.${NC}"
+else
+    echo -e "${BLUE}Skipping Docker installation.${NC}"
+fi
+echo
+
 # Optional: Configure UFW
 read -p "Do you want to set up UFW firewall? (y/n): " install_ufw
 if [[ $install_ufw =~ ^[Yy]$ ]]; then
@@ -67,6 +105,56 @@ if [[ $install_ufw =~ ^[Yy]$ ]]; then
     echo -e "${GREEN}UFW firewall installed and configured.${NC}"
 else
     echo -e "${BLUE}Skipping UFW installation.${NC}"
+fi
+echo
+
+# Optional: Add SSH key
+read -p "Do you want to add an SSH key to authorized_keys? (y/n): " add_ssh_key
+if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
+    # Ask if adding to root
+    read -p "Add SSH key to root user? (y/n): " add_to_root
+    
+    if [[ $add_to_root =~ ^[Yy]$ ]]; then
+        # Adding to root
+        ssh_username="root"
+        ssh_dir="/root/.ssh"
+    else
+        # Ask for username
+        read -p "Enter the username to add the SSH key for: " ssh_username
+        ssh_dir="/home/$ssh_username/.ssh"
+    fi
+    
+    # Get the SSH key
+    echo "Enter the SSH public key (paste the entire key):"
+    read ssh_public_key
+    
+    if [ -n "$ssh_public_key" ]; then
+        # Create .ssh directory if it doesn't exist
+        sudo mkdir -p $ssh_dir
+        
+        # Check if authorized_keys exists, if not create it
+        if [ ! -f "$ssh_dir/authorized_keys" ]; then
+            sudo touch $ssh_dir/authorized_keys
+        fi
+        
+        # Add the key - simply append to the end
+        echo "$ssh_public_key" | sudo tee -a $ssh_dir/authorized_keys > /dev/null
+        
+        # Set proper permissions
+        sudo chmod 700 $ssh_dir
+        sudo chmod 600 $ssh_dir/authorized_keys
+        
+        # Set proper ownership (only for non-root users)
+        if [[ ! $add_to_root =~ ^[Yy]$ ]]; then
+            sudo chown -R $ssh_username:$ssh_username $ssh_dir
+        fi
+        
+        echo -e "${GREEN}SSH key added to $ssh_dir/authorized_keys${NC}"
+    else
+        echo -e "${RED}No SSH key provided. Skipping.${NC}"
+    fi
+else
+    echo -e "${BLUE}Skipping SSH key addition.${NC}"
 fi
 echo
 
@@ -198,8 +286,18 @@ echo -e " ? Essential security tools installed"
 if [[ $install_tailscale =~ ^[Yy]$ ]]; then
   echo -e " ? Tailscale installed"
 fi
+if [[ $install_docker =~ ^[Yy]$ ]]; then
+  echo -e " ? Docker installed"
+fi
 if [[ $install_ufw =~ ^[Yy]$ ]]; then
   echo -e " ? UFW firewall configured"
+fi
+if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
+  if [[ $add_to_root =~ ^[Yy]$ ]]; then
+    echo -e " ? Added SSH key to root user"
+  else
+    echo -e " ? Added SSH key to user: $ssh_username"
+  fi
 fi
 echo -e " ? SSH hardened"
 echo -e " ? Fail2ban configured"
@@ -207,9 +305,14 @@ echo -e " ? Unattended upgrades set up"
 echo -e " ? System hardening applied"
 echo
 echo -e "${YELLOW}NEXT STEPS:${NC}"
-echo -e "1. If you installed Tailscale, run: ${BLUE}sudo tailscale up${NC}"
-echo -e "2. Check firewall status: ${BLUE}sudo ufw status${NC}"
-echo -e "3. Verify fail2ban is working: ${BLUE}sudo fail2ban-client status${NC}"
+echo -e "1. To check firewall status: ${BLUE}sudo ufw status${NC}"
+echo -e "2. To verify fail2ban is working: ${BLUE}sudo fail2ban-client status${NC}"
+if [[ $install_tailscale =~ ^[Yy]$ ]]; then
+  echo -e "3. To check Tailscale status: ${BLUE}sudo tailscale status${NC}"
+fi
+if [[ $install_docker =~ ^[Yy]$ ]]; then
+  echo -e "4. To use Docker without sudo, log out and back in. Or reboot the system to finalize changes (recommended)"
+fi
 echo
 
 # Step 9: Reboot system (optional)
