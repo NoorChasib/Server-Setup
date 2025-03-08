@@ -304,26 +304,51 @@ echo -e " - Fail2ban configured"
 echo -e " - Unattended upgrades set up"
 echo -e " - System hardening applied"
 echo
-echo -e "${YELLOW}NEXT STEPS:${NC}"
-echo -e "1. To check firewall status: ${BLUE}sudo ufw status${NC}"
-echo -e "2. To verify fail2ban is working: ${BLUE}sudo fail2ban-client status${NC}"
-if [[ $install_tailscale =~ ^[Yy]$ ]]; then
-  echo -e "3. To check Tailscale status: ${BLUE}sudo tailscale status${NC}"
-fi
+
+echo -e "${YELLOW}IMPORTANT NEXT STEPS:${NC}"
+echo -e "- To check firewall status: ${BLUE}sudo ufw status${NC}"
+echo -e "- To verify fail2ban is working: ${BLUE}sudo fail2ban-client status${NC}"
+
 if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
-  echo -e "4. To check SSH key: ${BLUE}cat ~/.ssh/authorized_keys${NC}"
+  echo -e "- Verify SSH key was added correctly: ${BLUE}cat $ssh_dir/authorized_keys${NC}"
 fi
+
+if [[ $install_tailscale =~ ^[Yy]$ ]]; then
+  echo -e "- To connect to Tailscale network: ${BLUE}sudo tailscale up${NC}"
+fi
+
 if [[ $install_docker =~ ^[Yy]$ ]]; then
-  echo -e "4. To use Docker without sudo, reboot the system to finalize changes."
+  echo -e "- To use Docker without sudo, reboot the system to finalize changes."
 fi
 echo
 
-# Step 9: Reboot system (optional)
+# Step 9: Reboot system (optional) with simple confirmation of all steps
 read -p "Do you want to reboot the system now to apply all changes? (y/n): " reboot_system
 if [[ $reboot_system =~ ^[Yy]$ ]]; then
-    echo -e "${RED}Rebooting system in 5 seconds...${NC}"
-    sleep 5
-    sudo reboot
+    echo -e "${YELLOW}Before rebooting, please confirm you have:${NC}"
+    
+    echo -e "- Checked firewall status (if applicable)"
+    echo -e "- Verified fail2ban is working"
+    
+    if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
+        echo -e "- Verified your SSH key works correctly"
+    fi
+
+    if [[ $install_tailscale =~ ^[Yy]$ ]]; then
+        echo -e "- Connected to Tailscale network"
+    fi
+    
+    echo
+    read -p "Have you completed these steps? (y/n): " steps_completed
+    
+    if [[ $steps_completed =~ ^[Yy]$ ]]; then
+        echo -e "${RED}Rebooting system in 5 seconds...${NC}"
+        sleep 5
+        sudo reboot
+    else
+        echo -e "${BLUE}Reboot canceled. Please complete the recommended steps first and reboot manually when ready.${NC}"
+        echo -e "${GREEN}Server setup complete!${NC}"
+    fi
 else
     echo -e "${BLUE}Skipping reboot. Please reboot manually later to apply all changes.${NC}"
     echo -e "${GREEN}Server setup complete!${NC}"
