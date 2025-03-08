@@ -281,28 +281,28 @@ echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}SERVER SECURITY SETUP COMPLETE!${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo -e "The following has been configured:"
-echo -e " ? System packages updated"
-echo -e " ? Essential security tools installed"
+echo -e " - System packages updated"
+echo -e " - Essential security tools installed"
 if [[ $install_tailscale =~ ^[Yy]$ ]]; then
-  echo -e " ? Tailscale installed"
+  echo -e " - Tailscale installed"
 fi
 if [[ $install_docker =~ ^[Yy]$ ]]; then
-  echo -e " ? Docker installed"
+  echo -e " - Docker installed"
 fi
 if [[ $install_ufw =~ ^[Yy]$ ]]; then
-  echo -e " ? UFW firewall configured"
+  echo -e " - UFW firewall configured"
 fi
 if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
   if [[ $add_to_root =~ ^[Yy]$ ]]; then
-    echo -e " ? Added SSH key to root user"
+    echo -e " - Added SSH key to root user"
   else
-    echo -e " ? Added SSH key to user: $ssh_username"
+    echo -e " - Added SSH key to user: $ssh_username"
   fi
 fi
-echo -e " ? SSH hardened"
-echo -e " ? Fail2ban configured"
-echo -e " ? Unattended upgrades set up"
-echo -e " ? System hardening applied"
+echo -e " - SSH hardened"
+echo -e " - Fail2ban configured"
+echo -e " - Unattended upgrades set up"
+echo -e " - System hardening applied"
 echo
 echo -e "${YELLOW}NEXT STEPS:${NC}"
 echo -e "1. To check firewall status: ${BLUE}sudo ufw status${NC}"
@@ -310,8 +310,11 @@ echo -e "2. To verify fail2ban is working: ${BLUE}sudo fail2ban-client status${N
 if [[ $install_tailscale =~ ^[Yy]$ ]]; then
   echo -e "3. To check Tailscale status: ${BLUE}sudo tailscale status${NC}"
 fi
+if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
+  echo -e "4. To check SSH key: ${BLUE}cat ~/.ssh/authorized_keys${NC}"
+fi
 if [[ $install_docker =~ ^[Yy]$ ]]; then
-  echo -e "4. To use Docker without sudo, log out and back in. Or reboot the system to finalize changes (recommended)"
+  echo -e "4. To use Docker without sudo, reboot the system to finalize changes."
 fi
 echo
 
