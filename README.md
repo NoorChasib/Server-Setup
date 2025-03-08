@@ -2,29 +2,31 @@
 
 Automatically configure a new Ubuntu 24.04 LTS server with secure defaults. This script streamlines the process of hardening a fresh server with security best practices and essential configurations.
 
-## Quick Install (Fastest)
-
-Run this command on your fresh Ubuntu server:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/NoorChasib/Server-Setup/main/server-setup.sh | sudo bash
-```
-
-## Secure Install Method (Most Secure)
+## Secure Install Method
 
 For additional security, download and verify the script before running:
 
+1. Download the script:
+
 ```bash
-# Download the script
 curl -fsSL -o server-setup.sh https://raw.githubusercontent.com/NoorChasib/Server-Setup/main/server-setup.sh
+```
 
-# Verify the script contents
+2. Verify the script contents:
+
+```bash
 less server-setup.sh
+```
 
-# Make it executable
+3. Make it executable:
+
+```bash
 chmod +x server-setup.sh
+```
 
-# Run with sudo
+4. Run the script with sudo:
+
+```bash
 sudo ./server-setup.sh
 ```
 
