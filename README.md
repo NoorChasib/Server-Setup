@@ -15,7 +15,7 @@ curl -fsSL -o server-setup.sh https://raw.githubusercontent.com/NoorChasib/Serve
 2. Verify the script contents:
 
 ```bash
-less server-setup.sh
+nano server-setup.sh
 ```
 
 3. Make it executable:
