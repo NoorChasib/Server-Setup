@@ -30,6 +30,12 @@ chmod +x server-setup.sh
 sudo ./server-setup.sh
 ```
 
+5. Remove the script after running:
+
+```bash
+rm -rf server-setup.sh
+```
+
 ## Features in Detail
 
 ### System Updates
