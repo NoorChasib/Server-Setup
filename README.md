@@ -6,31 +6,37 @@ Automatically configure a new Ubuntu 24.04 LTS server with secure defaults. This
 
 For additional security, download and verify the script before running:
 
-1. Download the script:
+1. Ensure server is up to date:
+
+```bash
+sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove && sudo apt clean
+```
+
+2. Download the script:
 
 ```bash
 curl -fsSL -o server-setup.sh https://raw.githubusercontent.com/NoorChasib/Server-Setup/main/server-setup.sh
 ```
 
-2. Verify the script contents:
+3. Verify the script contents:
 
 ```bash
 nano server-setup.sh
 ```
 
-3. Make it executable:
+4. Make it executable:
 
 ```bash
 chmod +x server-setup.sh
 ```
 
-4. Run the script with sudo:
+5. Run the script with sudo:
 
 ```bash
 sudo ./server-setup.sh
 ```
 
-5. Remove the script after running:
+6. Remove the script after running:
 
 ```bash
 rm -rf server-setup.sh
