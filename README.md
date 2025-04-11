@@ -6,17 +6,28 @@ This script automates the initial security hardening and setup process for a new
 
 ## Features
 
-- **System Updates:** Performs a full system update and package cleanup.
-- **Essential Tools:** Installs fundamental packages like `curl`, `ca-certificates`, `unattended-upgrades`, `qemu-guest-agent`, and `nfs-common`.
-- **SSH Hardening:** Secures SSH access by disabling password authentication, enforcing key-based login, and limiting root login.
-- **Automatic Updates:** Configures `unattended-upgrades` for automatic installation of security updates.
-- **System Hardening:** Applies kernel-level security settings via `sysctl` (e.g., IP spoofing protection, ICMP broadcast ignore, SYN flood protection).
-- **Optional Tailscale:** Prompts to install the Tailscale VPN client.
-- **Optional Docker:** Prompts to install Docker Engine.
-- **Optional UFW Firewall:** Prompts to install and configure the Uncomplicated Firewall (UFW) with safe defaults (deny incoming, allow outgoing, allow SSH).
-- **Optional Fail2ban:** Prompts to install and configure Fail2ban to protect SSH from brute-force attacks.
-- **Optional CrowdSec:** Prompts to install the CrowdSec agent, optionally change its API port, and optionally install the nftables firewall bouncer for active threat blocking.
-- **Optional SSH Key Addition:** Prompts to add a provided SSH public key to the specified user's `authorized_keys` file.
+- **System Updates:**
+  - Performs a full system update and package cleanup.
+- **Essential Tools:**
+  - Installs fundamental packages like `curl`, `ca-certificates`, `unattended-upgrades`, `qemu-guest-agent`, and `nfs-common`.
+- **SSH Hardening:**
+  - Secures SSH access by disabling password authentication, enforcing key-based login, and limiting root login.
+- **Automatic Updates:**
+  - Configures `unattended-upgrades` for automatic installation of security updates.
+- **System Hardening:**
+  - Applies kernel-level security settings via `sysctl` (e.g., IP spoofing protection, ICMP broadcast ignore, SYN flood protection).
+- **Optional Tailscale:**
+  - Prompts to install the Tailscale VPN client.
+- **Optional Docker:**
+  - Prompts to install Docker Engine.
+- **Optional UFW Firewall:**
+  - Prompts to install and configure the Uncomplicated Firewall (UFW) with safe defaults (deny incoming, allow outgoing, allow SSH).
+- **Optional Fail2ban:**
+  - Prompts to install and configure Fail2ban to protect SSH from brute-force attacks.
+- **Optional CrowdSec:**
+  - Prompts to install the CrowdSec agent, optionally change its API port, and optionally install the nftables firewall bouncer for active threat blocking.
+- **Optional SSH Key Addition:**
+  - Prompts to add a provided SSH public key to the specified user's `authorized_keys` file.
 
 ## Compatibility
 
