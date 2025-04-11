@@ -21,11 +21,11 @@ echo
 
 # Step 2: Install required packages
 echo -e "${YELLOW}Installing base required packages...${NC}"
-sudo apt install -y fail2ban curl ca-certificates unattended-upgrades qemu-guest-agent nfs-common
+sudo apt install -y curl ca-certificates unattended-upgrades qemu-guest-agent nfs-common
 echo -e "${GREEN}Base packages installed.${NC}"
 echo
 
-# Optional: Install Tailscale
+# Step 3 (Optional): Install Tailscale
 read -p "Do you want to install Tailscale? (y/n): " install_tailscale
 if [[ $install_tailscale =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Installing Tailscale...${NC}"
@@ -36,7 +36,7 @@ else
 fi
 echo
 
-# Optional: Install Docker
+# Step 4 (Optional): Install Docker
 read -p "Do you want to install Docker? (y/n): " install_docker
 if [[ $install_docker =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Installing Docker...${NC}"
@@ -74,8 +74,8 @@ else
 fi
 echo
 
-# Optional: Configure UFW
-read -p "Do you want to set up UFW firewall? (y/n): " install_ufw
+# Step 5 (Optional): Configure UFW
+read -p "Do you want to install and configure UFW firewall? (y/n): " install_ufw
 if [[ $install_ufw =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Installing and configuring UFW firewall...${NC}"
     sudo apt install -y ufw
@@ -108,7 +108,100 @@ else
 fi
 echo
 
-# Optional: Add SSH key
+# Step 6 (Optional): Install Fail2ban
+read -p "Do you want to install and configure Fail2ban? (y/n): " install_fail2ban
+if [[ $install_fail2ban =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Installing and configuring Fail2ban...${NC}"
+    # Install Fail2ban package
+    sudo apt update # Good practice to update before install
+    sudo apt install -y fail2ban
+
+    # Create a more comprehensive jail.local file for sshd
+    cat > /tmp/jail.local << 'EOF'
+[sshd]
+enabled = true
+banaction = iptables-multiport
+maxretry = 3
+findtime = 300
+bantime = 3600
+EOF
+
+    # Move the configuration file into place
+    sudo mv /tmp/jail.local /etc/fail2ban/jail.local
+
+    # Enable and restart the Fail2ban service
+    sudo systemctl enable fail2ban.service
+    sudo systemctl restart fail2ban.service
+    echo -e "${GREEN}Fail2ban installed, configured, and enabled.${NC}"
+else
+    # Message if the user chooses not to install
+    echo -e "${BLUE}Skipping Fail2ban installation.${NC}"
+fi
+echo # Add a blank line for better readability
+
+# Step 7 (Optional): Install CrowdSec
+read -p "Do you want to install CrowdSec? (y/n): " install_crowdsec
+crowdsec_installed=false
+if [[ $install_crowdsec =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Installing CrowdSec...${NC}"
+    # Add CrowdSec repository and install
+    curl -s https://install.crowdsec.net | sudo bash
+    sudo apt update
+    sudo apt install -y crowdsec
+
+    # Ask to change default port
+    read -p "CrowdSec installed. Do you want to change the default API port (8080)? (y/n): " change_crowdsec_port
+    if [[ $change_crowdsec_port =~ ^[Yy]$ ]]; then
+        read -p "Enter the new port number for CrowdSec API: " new_crowdsec_port
+        # Validate if it's a number (basic check)
+        if [[ "$new_crowdsec_port" =~ ^[0-9]+$ ]]; then
+            echo -e "${YELLOW}Updating CrowdSec configuration files with port $new_crowdsec_port...${NC}"
+            # Change port in config.yaml
+            sudo sed -i "s/listen_uri: 127.0.0.1:8080/listen_uri: 127.0.0.1:$new_crowdsec_port/" /etc/crowdsec/config.yaml
+            # Change port in local_api_credentials.yaml
+            sudo sed -i "s|url: http://127.0.0.1:8080|url: http://127.0.0.1:$new_crowdsec_port|" /etc/crowdsec/local_api_credentials.yaml
+            echo -e "${GREEN}CrowdSec ports updated.${NC}"
+        else
+            echo -e "${RED}Invalid port number entered. Using default port 8080.${NC}"
+        fi
+    fi
+
+    # Start CrowdSec service
+    echo -e "${YELLOW}Starting CrowdSec service...${NC}"
+    sudo systemctl enable crowdsec.service
+    sudo systemctl start crowdsec.service
+
+    # Optionally install firewall bouncer
+    read -p "Do you want to install the CrowdSec firewall bouncer (nftables)? (y/n): " install_bouncer
+    if [[ $install_bouncer =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}Installing CrowdSec firewall bouncer...${NC}"
+        sudo apt install -y crowdsec-firewall-bouncer-nftables
+        echo -e "${YELLOW}Restarting CrowdSec services...${NC}"
+        # Restart services after bouncer installation
+        sudo systemctl restart crowdsec-firewall-bouncer.service
+        sudo systemctl restart crowdsec.service
+        echo -e "${GREEN}CrowdSec firewall bouncer installed and services restarted.${NC}"
+
+        # Check status
+        echo -e "${BLUE}Checking service status:${NC}"
+        sudo systemctl status crowdsec --no-pager
+        sudo systemctl status crowdsec-firewall-bouncer --no-pager
+    else
+        echo -e "${BLUE}Skipping CrowdSec firewall bouncer installation.${NC}"
+        # If bouncer skipped, still ensure main service is running and check status
+        echo -e "${BLUE}Checking CrowdSec service status:${NC}"
+         sudo systemctl status crowdsec --no-pager
+    fi
+
+    echo -e "${GREEN}CrowdSec installation and configuration complete.${NC}"
+    echo -e "${RED}REMINDER: You may need to enroll this CrowdSec engine instance on the CrowdSec Hub.${NC}"
+    crowdsec_installed=true
+else
+    echo -e "${BLUE}Skipping CrowdSec installation.${NC}"
+fi
+echo
+
+# Step 8 (Optional): Add SSH key
 read -p "Do you want to add an SSH key to authorized_keys? (y/n): " add_ssh_key
 if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
     # Ask if adding to root
@@ -158,7 +251,7 @@ else
 fi
 echo
 
-# Step 3: Configure SSH
+# Step 9: Configure SSH
 echo -e "${YELLOW}Applying secure SSH configurations...${NC}"
 
 # Create backup of SSH config
@@ -192,27 +285,7 @@ echo -e "${GREEN}SSH secured with best practices.${NC}"
 echo -e "${RED}NOTE: Make sure you have working key-based authentication before disconnecting!${NC}"
 echo
 
-# Step 4: Set up Fail2ban
-echo -e "${YELLOW}Configuring Fail2ban...${NC}"
-
-# Create a more comprehensive jail.local file
-cat > /tmp/jail.local << 'EOF'
-[sshd]
-enabled = true
-banaction = iptables-multiport
-maxretry = 3
-findtime = 300
-bantime = 3600
-EOF
-
-sudo mv /tmp/jail.local /etc/fail2ban/jail.local
-
-sudo systemctl enable fail2ban.service
-sudo systemctl restart fail2ban.service
-echo -e "${GREEN}Fail2ban configured and enabled.${NC}"
-echo
-
-# Step 5: Configure Unattended-Upgrades
+# Step 10: Configure Unattended-Upgrades
 echo -e "${YELLOW}Setting up unattended-upgrades...${NC}"
 
 # Adjust configurations in `50unattended-upgrades`
@@ -232,7 +305,7 @@ sudo dpkg-reconfigure -f noninteractive unattended-upgrades
 echo -e "${GREEN}Unattended-upgrades configured.${NC}"
 echo
 
-# Step 6: Configure System Hardening
+# Step 11: Configure System Hardening
 echo -e "${YELLOW}Applying system hardening...${NC}"
 
 # Create sysctl hardening configuration
@@ -270,13 +343,13 @@ sudo sysctl -p /etc/sysctl.d/99-security-hardening.conf
 echo -e "${GREEN}System hardening applied.${NC}"
 echo
 
-# Step 7: Perform final update and upgrade
+# Step 12: Perform final update and upgrade
 echo -e "${YELLOW}Performing final system update and upgrade...${NC}"
 sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove && sudo apt clean
 echo -e "${GREEN}Final system update complete.${NC}"
 echo
 
-# Step 8: Summary and instructions
+# Step 13: Summary and instructions
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}SERVER SECURITY SETUP COMPLETE!${NC}"
 echo -e "${BLUE}=========================================${NC}"
@@ -300,10 +373,22 @@ if [[ $add_ssh_key =~ ^[Yy]$ ]]; then
   fi
 fi
 echo -e " - SSH hardened"
-echo -e " - Fail2ban configured"
+if [[ $install_fail2ban =~ ^[Yy]$ ]]; then
+  echo -e " - Fail2ban configured"
+fi
+if [[ "$crowdsec_installed" = true ]]; then
+  echo -e " - CrowdSec installed and configured"
+  if [[ $install_bouncer =~ ^[Yy]$ ]]; then
+      echo -e "   - CrowdSec firewall bouncer installed"
+  fi
+fi
 echo -e " - Unattended upgrades set up"
 echo -e " - System hardening applied"
 echo
+if [[ "$crowdsec_installed" = true ]]; then
+    echo -e "${RED}REMINDER: If you installed CrowdSec, remember to enroll this engine instance on the CrowdSec Hub.${NC}"
+    echo
+fi
 
 echo -e "${YELLOW}IMPORTANT NEXT STEPS:${NC}"
 echo -e "- To check firewall status: ${BLUE}sudo ufw status${NC}"
@@ -322,7 +407,7 @@ if [[ $install_docker =~ ^[Yy]$ ]]; then
 fi
 echo
 
-# Step 9: Reboot system (optional) with simple confirmation of all steps
+# Step 14: Reboot system (optional) with simple confirmation of all steps
 read -p "Do you want to reboot the system now to apply all changes? (y/n): " reboot_system
 if [[ $reboot_system =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Before rebooting, please confirm you have:${NC}"
